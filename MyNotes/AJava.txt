@@ -1,0 +1,958 @@
+
+- what is JDBC?
+    - java Database connectivity
+    - it is API for conneting the Database with server to perform the CRUD operstion.
+- Why is JDBC?
+    - it allows developers to build the java Application which are platform independent and DB independent(not totally but partically independent).
+- JDBC driver?
+    - it is intermidiator to traslate the java code(API) to  database understanable  code and also traslate the database code to java application understandable code.  
+    - in sort it is traslator between the java aplication and database.
+    - Translates Java API calls into database-specific calls so that the database can understand and execute the queries.
+    - Translates database responses (results or errors) into a format that the Java application can understand.
+    - In simpler terms, the JDBC driver enables communication between Java programs and databases.
+    - A JDBC driver is a software component (a set of classes, typically in a .jar file) that allows Java applications to interact with a database.
+    - just like jre(platformspecific) JDBC driver are platform specific.
+
+- JDBC API
+    - it is mainly consiste of interface(what is to be done)
+        - Connection, Statement, PreparedStatement, ResultSet
+-JDBC vendor(jar file)
+    - implimenting class of the JDBC API is present in this (how is to be done)
+    - ex,
+        - MySqlConnectionImpl        // for MySQL
+        - OracleConnectionImpl       // for Oracle
+        - PostgresConnectionImpl     // for PostgreSQL
+
+---------project
+- new project without module
+- go to 3rd option library
+    - in class path set the JDBC driver jar file (we use mySql so mySQL JDBC Driver jar file).
+     ex, mysql-connector-j-9.1.0.jar
+
+- Modules = Containers or groups of packages.
+- Packages = Groups of classes and interfaces.
+
+-mysql (module)   
+    - com.mysql.cj.jdbc (package)
+        - Driver ( - JDBC driver)
+        - ConnectionImpl ( Connection(interface) implimenting class)
+ -So yes, java.base and java.sql are both modules, and they contain related packages.
+
+
+- java.sql package ->collection of the interface
+    - Connection (I/f)
+    - Statement
+    -
+- interface clearcut sepertion  b/w what is to be done  how is to be done
+-
+
+
+- spring simplify the java development.
+
+------------------JPA-------------------------
+- JPA stands for Java Persistence API.
+- It is a standard specification in Java for object-relational mapping (ORM) and managing relational data in Java applications.
+- JPA lets you map Java objects (classes) to database tables, so we can:
+- Use Java code instead of SQL to interact with the database.
+- perform CRUD operations (Create, Read, Update, Delete) on your data.
+
+
+
+-----------DB connectivity -------------------
+- create DBUtils calass to provide the DB Connection
+    - belows are DriverManager methods,
+        - openConnection(singleton pattern)
+            
+        - getConnection(static method od the DriverManager class(mysql-module) which return Connection object)
+            - getConnection(String url, String user, String password) 
+                url -> jdbc(protocol):mysql(subprotocol-vendor jar file)://localhost:3306(locally hosted db)/adv_java(database)
+                user -> root
+                password -> cdac
+            
+         - closeConnection (after use th db close the connection).
+===========================================
+ex,
+public class DBUtil{
+            private static final Connection connection;
+            private static final URL_DB;
+            private static final USER;
+            private static final PASSWORD;
+
+            //m-1 for creating the connection(eger)
+            {
+                connection = DriverManager.getConnection(URL_DB,USER,PASSWORD); // line 1 alternative (eger)
+            }
+
+            //m-2 for creating the connection(lazy)
+            public static void openConnection() throws ClassNotFoundException,SQL Exception {
+                if(connnection != null){
+                    connection = DriverManager.getConnection(URL_DB,USER,PASSWORD); // line 1 (lazy)
+                }
+
+                // this is example of lazy resolution as utill the openConnection method not call connection will not eastablished.
+                // to make it eger resolution we have to do is like in static block we have to provide  line1 code;
+            }
+
+            //getter (getConnection)
+            public static Connection getConnection(){
+                return connection;
+            }
+
+            // close connection
+            public static void closeConnection throws SQLException(){
+                if(connection != null){
+                   connection.close(); // close is insatance method of Connection Interface
+                }
+            }
+
+}
+
+public class TestConnection{
+
+    public static void main(String[] args){
+
+        try{
+            //open connection
+            DBUtils.openConnection();
+
+            // get connection
+            Connection conn = DBUtils.getConnection();
+            System.out.println(conn); // com.mysql.cj.jdbc.ConnectionImpl@12435 // implimenting class name of Connection interface
+
+            //close connection
+            DBUtils.closeConnection();
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        
+    }
+}
+         
+========================================================
+- type of jdbc driver
+
+- operations(table user)
+    ResultSet(slected columns and row from the database)
+
+- dev steps
+    1. get DB connection
+    2. create Statement from the connection
+    3.execute query and get the ResultSet
+    4. process Result and dispplay data
+    5. close DB connection
+// mam TestStatement class
+
+- user login
+    - email and password(i/p)
+    - valid login with details or give error
+        1. get DB connection(openCn, getCn)
+            sql- select * from users where email = ? and password = ?
+        2. create Statement from the connection
+        3.execute query and get the ResultSet
+        4. process Result and dispplay data
+        5. close DB connection
+
+
+================================================================
+- creatStatement is insatance method of the  Connection interface and return type of this method is Statement (Statement object)
+    Statement createStatement() throws SQLException
+- it is used to send the SQL statement(without parameters) to database.
+
+# Statement Interface
+    - public interface and object of this interface is used for the executing a static SQL statement and return the produced result.
+
+    - ResultSet executeQuery(String sql) throws SQLExeception -> for selectype of query
+
+------------------------------------------------------------------------
+- Statement 
+    - used for static query and when no in, out, or inout parameters are required
+    - public Statement createStatement() throws SQLException
+- PreparedStatement
+    - used for dynamic query which supports the IN parameters.
+    - public PreparedStatement prepareStatement(String sql) throws SQLException
+- CallableStatement
+    - used for stored function and stored procedure 
+    - public CallableStatement prepareCall(String invocationSyntaxt) throws SQLException
+
+-----------------------------------------------------------------------------
+3 moth of execution query
+
+- executeQuery(PreparedStatement)
+    - used for select query which return single result set
+    - public ResultSet executeQuery(String sql) throws SQLException
+
+- executeUpdate(PreparedStatement)
+    - used for  
+        - DDL(create table/alter table/create procedure/ create function), 
+        - DML (insert update delete)
+        - public int executeUpdate(String sql) throws SQLException fro Statement
+        - public int executeUpdate() throws SQLException for PreparedStatement
+        - int means number of affected row 
+
+- execute
+    - used for executing the stored procedure/function or incase of the unknow result
+    - public boolean execute() throws SQLException
+    -public boolean execute(String sql) throws SQLException
+
+
+-------------------------------------------------------------------
+Resultset processing
+
+- read the data
+    - public Type getType(int columnposition) throws SQLException
+    - public Type getType (int columnName) throws SQLException
+    - char/varchar/varchar2 - String
+    - number - int/long/float/double
+    - data java.sql.Data 
+
+---------------------------------
+- general step
+    step -1 get Db connection (openConnection, getConnection)
+    step -2 Create Statement from Connection (statement/ PreparedStatement/ CallableStatement)
+    step -3 execute Query  and get ResultSet
+    step -4 Process Result and display data
+    step -5 close DB connection.
+
+ex, 
+    public class TestStatement{
+        public static void main(String[] args){
+             try{
+                openConnection();
+                //get connection
+                Connection cn = getConnection();
+
+                // create JDBC statement
+                Statement st = cn.createStatement() throws SQLException
+
+                // execute the query and processing data
+                try(ResultSet rst = St.executeQuery("select * from users")){
+                    while(rst.next()){
+                        System.out.println(
+                            "
+                            ID %d 
+                            Name %s %s 
+                            Email %s
+                            password %s
+                            dob %s 
+                            voting Status %b 
+                            role %s 
+
+                            "
+                        ,
+                            rst.getInt(1),
+                            rst.getString(2),
+                            rst.getString(3),
+                            rst.getString(4),
+                            rst.getString(5),
+                            rst.getDate(6),
+                            rst.getBoolean(7),
+                            rst.getString(8)
+                        );
+                    }
+                }
+
+                //close connection
+                closeConnection();
+             }catch(Exception e){
+                e.printStackTrace();
+             }
+        }
+    }
+
+----------------------------------------------------------------
+user login  steps
+    step -1 get Db connection (openConnection, getConnection)
+            sql - select * from users where email = ? and password = ?
+    step -2 Create PreparedStatement from Connection (statement/ PreparedStatement/ CallableStatement)
+            step 2.1 set parameters
+                public void setType(int parameterPosition, Type val) throws SQLException
+    step -3 execute Query (executeQuery() method) and get ResultSet
+    step -4 Process Result and display data
+    step -5 close DB connection.
+ex,
+    public class TestPreparedStatement{
+        public static void main(String[] args){
+             try(Scanner sc = new Scanner(System.in)){ // ARM block 
+                openConnection();
+                //get connection
+                Connection cn = getConnection();
+
+                
+                String sql = "select * from users where email = ? and password = ?"
+                
+                // create JDBC PreparedStatement
+                PreparedStatement pst = cn.prepareStatement(sql) throws SQLException
+
+                System.out.println("Enter you email and password");
+
+                //set parameters
+                pst.setString(1,sc.next()); // email
+                pst.setString(2,sc.next()); //password
+
+
+                // execute the query and processing data
+                try(ResultSet rst = pst.executeQuery()){
+                    if(rst.next()){
+                        System.out.println("Successfull log in")
+                        System.out.println(
+                            "
+                            ID %d 
+                            Name %s %s 
+                            Email %s
+                            password %s
+                            dob %s 
+                            voting Status %b 
+                            role %s 
+
+                            "
+                        ,
+                            rst.getInt(1),
+                            rst.getString(2),
+                            rst.getString(3),
+                            rst.getString(4),
+                            rst.getString(5),
+                            rst.getDate(6),
+                            rst.getBoolean(7),
+                            rst.getString(8)
+                        );
+                    }
+                    else{
+                        System.out.println("invalid user");
+                    }
+                }
+
+                //close connection
+                closeConnection();
+
+             }catch(Exception e){
+                e.printStackTrace();
+             }
+        }
+    }
+-----------------------------------------------
+update password 
+    1. load the driver by Class.forName() optional
+    2. get fixed connection 
+        Connection cn = DriverManager.getConnection(url,username,password)
+        URL = jdbc.mysql://host:port/DB_name
+                mysal - vender 
+                host - local or remote 
+                port - 8080 
+                DB_name - database name
+    3. write statement - PreparedStatement 
+     (as IN parameter is required like email oldPassward, newPassword)
+    4. query : update user set passward = ? where email = ? and passward = ?
+    5. set IN parameter
+        pst.setString(1,sc.next()); // new passward
+        pst.setString(2,sc.next()); // email
+        pst.setString(3,sc.next()); // old passward
+    6. execute query
+        executeQuery - for DQL
+        executeUpdate - for DML DDL // we use this.
+        execute - for stored procedure and function
+
+        int updateCount = ps1.executeUpdate();
+    7. cleanUpcode
+        - close pst and DB connection.
+----------------layered Architacture
+- till now we write the UI and JDBC logic in one file like user input which is UI part 
+processing or executing the query all this logic is JDBC logic(business 
+logic) showing out put (UI) part so that our codes mashed up.
+
+- it provide the seperation of concerns and code resuablity like database connectivity code.
+- sequence
+    - Tester class (which contain main method) - UI (user interaction)
+    - DAO - data Accessobject layer (JDBC code) - dependent (on DBUtils)
+        - DAO interface 
+        - DAO interface implimenting class
+    - DBUtils - open / get / close all this method is used by the DAO layer (dependancy of DAO)
+    - POJO class (ORM)
+        - table - pojo class
+        -columns - property pf pojo class
+        - row - object of the POJO class.
+    - DB
+
+
+ORM(object relational mapping)
+
+    POJO class (Plain  Old Java Object)
+        - ordinary java class which does't have any business logic, no inheritance.
+        - to represent table of the database we create one class which represent the 
+            table, insatance property or variable which represnt the columns and 
+            instace of that object is represent the rows of the tables.
+    DAO (Data Access Object layer)
+        - 
+
+
+- Tester dependent on the DAO so we create the instance of the DAO in Tester
+- DAO dependent on the DBUtils for JDBC like open/get/close connection so this will
+ all this method called in the DAO constructor.
+
+ 
+------------Day -2 (16-05-2-25)---------------------------------
+
+- SQL injection attack
+    - what?
+         cybersecurity vulnerability that allow attacker to interfere with the queries that is send to db.
+    - how it work?
+        - if our sql query not properly handle then it will happend
+    - prvention?
+        - use PreparedStatement instead of Statement
+
+- Statement(p)
+    - PreparedStatement(c) & CallableStatement(c)
+
+- java doc stored fun and stored procedure(read)
+
+
+s -1 create CallableStatement
+    CallableStatement prepareCall(String sql) throws SQLException
+
+    String sql = " { call trasfer_funds_procedure(?,?,?,?,?)}" 
+    cst1 = cn.prepareCall(String sql) throws SQLException
+
+s -2 register out parameters    
+     cts1.registerOutParameters(4,Types.DOUBLE)   //Types is class and double is final constant
+      cts1.registerOutParameters(5,Types.DOUBLE)   //Types is class and double is final constant
+
+s -3 set in parameters (in constructor)
+    cst1.setInt(1,srcAcNo);
+     cst1.setInt(2,desAcNo);
+      cst1.setDouble(3,amount);
+
+s -4 execute
+    cst1.execute()
+    - cst1.getDouble(4) and cst1.getDouble(5)
+
+s -5 close the connection and CallableStatement
+
+tester class
+    psvm(){
+       try{
+            // create dao insatance
+            BankAccountDaoImpl  dao = new BankAccountDaoImpl()
+
+            //accept input and invoke dao method
+            System.out.println()
+
+            // clean up dao
+       }catch(){
+
+       }
+    }
+
+s- 6 ResultSet(i) cursor
+
+
+-----------------transaction with JDBC---------------
+- group of sql query is transaction.
+
+step -1 diable auto commit.
+    public void setAutoCommit(boolean flag) throws SQLException
+
+step -2 wrap entire Tx in try and catch
+    step -2.1 commit at last statement in try block
+            public void commit() throws SQLException
+    step -2.2 in catch block then rollback Tx
+            public void rollback() throws SQLException
+
+step -3 enable auto commit flag
+
+
+partial commit 
+    //setSavePoint is method of Connection 
+    SavePoint setSavePoint() throws SQLException // return type SavePoint
+
+
+
+--------web programming in java--------------
+
+- what is java EE (Enterprise Edition) (specification)?
+ provide platform for building and deploying large scale, multi tiered, scalable and secure network application.
+
+ - specification is service or requirement and java EE is specification.
+
+- java EE
+    - Servlet API
+    - ...
+    - ....
+
+- web server
+    - one server side JVM  - web Container
+ and 
+- application server 
+
+
+- why java EE?
+    - it can supports diff type of client
+        thin client(web client)
+        thick client (java application)
+        smart client
+    - java EE  based application are server independent 
+        we can create & deploy server sie application , on any java EE compliant server.
+
+        but how?
+        because EE is specification not implimentation
+
+        provide same result  
+
+- diagram (request responses flow)
+- web Container
+    - server side JVM
+    - jobs
+        - creating HTTP request and response object 
+        - Controlling life cycle of dynamic web component
+        - giving ready made supports for service.
+        - handling cocurrent request from multiple client
+        - managin session tracking
+        - manages state
+        - help in page navigation
+web -INF - private 
+
+- web.xml?
+    - created by developers(with the iDE)
+    - where - web-INF
+    - when - deployment time
+    - what does it consisteof?
+        Deployement instruction(welcom manages).
+
+- why Servlet?
+    - to add dynamic nature to the web application  perform this jobs
+        - request processing
+        - Business Logic
+        - Dynamic response generation
+        - Managing DAO layer
+        - page navigation
+
+- what is Servlet?
+    - it is java class (without main method)
+    - Servlet API   
+        - specification - servlet-api.jar
+        - implmenting class - apache - tomcat-Catalina.jar
+- Servlet (i)
+    implimentation class 
+        GenericServlet - abstract implimenting class of Servlet interface
+        methods: init, service, destroy
+                service(req, res) - abstract method
+                init and destroy - concrete class
+
+    --------------------------------------------
+    hirachchy          
+    Servlet(i)
+        GenericServlet(ac)
+            HttpServlet(ac extends GenericServlet) -> abstract call without any abstract method
+                MyServlet extends HttpServlet
+    --------------------------------------------
+    - jakarta.servlet.http.HttpServlet
+        -super class for writing our servlets   
+            ex, public class HelloWorldServlet extands HttpServlet {
+
+                // to add custom initialization logic and custom clean up logic override both method
+
+                // to add client servicing logic - HttpServlet class has already implimentation of service method so no need to override it 
+                -------------------
+                // srevice method calls -> doGet() method - if the client has used GET request
+                // srevice method calls -> doPOST() method - if the client has used POST request
+                // srevice method calls -> doPUT() method - if the client has used Update request (complete update)
+                // srevice method calls -> doDELETE() method - if the client has used delete request
+                // srevice method calls -> doPETCH() method - if the client has used Update request (partical update)
+
+                // all this must be override by the prgrammer.
+            }
+----------------------------------------------------------
+- steps for creating the servlet
+1. Create a servlet class extends from HttpServlet
+    public LoginServlet extends HttpServlet{
+
+    }
+
+2. override init method - if we need any initialization
+    ex, openConnection create Dao instance (Earlier this is done with tester class)
+
+3. must override doXXX
+    ex, doPOST (here we have login form so that email and password have to send to server)
+    protected void doPost(HttpServletRequest rq, HttpServletResponse resp) throws SE, IOEX
+
+    3.1 set response content type 
+        resp.setContentType("text/html")
+    3.2 send response text to client
+        method dignature: public PrintWriter getWriter() throws IOException
+        PrintWriter pw = resp.getWriter();
+    3.3 render the response
+        pw.print("<h1>here is your response</h1>");
+    3.4 close implicitely  pw 
+        pw.close();
+4. if any clean up(close db cn, close pst) then destroy() method override
+    public void destroy()
+
+5. deployment
+    1. mordern option Annotation 
+        @WebServlet(value = "/test") from jakarta.servlet.annotation 
+        public class HelloServlet extends HttpServlet {...}
+
+        web container read this annotation
+    2. xml tag in web.xml
+        <servlet>
+            <servlet-name>
+                abc
+            </servlet-name>
+            <servlet-class>
+                com.cdac.pages.MyServlet
+            </servlet-class>
+        </servlet>
+
+        <servlet-mapping>
+            <servlet-name>
+                abc
+            </servlet-name>
+            <url-pattern>
+                /hello
+            </url-pattern>
+        </servlet-mapping>
+    =======================================
+        ServletResponse is parent interface 
+            methods 
+                getWriter()
+                getOutputStream()
+                setContentType(String type)
+            HttpServletResponse is child interface
+                methods
+                    addCookie(Cookie cookie)
+                    sendRedirect(String location)
+                    setStatus(int sc)
+                    sendError(int sc)
+                    setHeader(String name, String value)
+
+    ------------------------------------------------
+        ServletRequest is parent interface
+            methods
+                public String getParameter(String param-name);     // Get form/query parameter
+                Object getAttribute(String name);     // Get request attribute
+                String getContentType();               // Content type of request body
+                InputStream getInputStream();         // Read binary body
+            
+            HttpServletRequest is child  interface
+                methods
+                    String getMethod();           // GET, POST, etc.
+                    String getHeader(String name);  // Get HTTP header
+                    Cookie[] getCookies();          // Get cookies
+                    HttpSession getSession();       // Get session
+                    String getRequestURI();         // URI of the request
+                    String getQueryString();        // ?key=value&...
+                    String getServletPath();        // Path to servlet
+========================================================================
+
+day -3
+web.xml -> diploment instruction.
+- what is the default loading policy of WC for servlets?
+    - it is lazy as when first request from the client is sends then it is loading
+    - to make is eager,
+        - loadOnStartUp = +ve value
+    - use case : if init method is time consuming then make it eager so that first request of the client will not have to wait.
+- to read request parameters sent from the client in the servlet
+    - public String getParameter(String paramName)
+    - public String[] getParameterValues(String paramName)
+
+
+- life cycle of the Servlet is start wheneven the first client send the first request
+it means it is lazy statup due to which first client may suffer or have to wait for response render
+- we can make is eager by providing the  loadOnStartup attribute in annotation as positive value
+    @WebServlet(value = "/test" loadOnStartup = 1)
+
+    default value of loadOnStartup = -1 -> lazy loading
+    if loadOnStartup > 0 -> eager loading
+
+--------------------------------------------------------
+step -1 copy mysql connector jar under tomacat_home -> lib ->   paste
+step -2 create new dynamic web project
+step -3 Configure login.html as the welcom page (web.xml)
+        day3_voting
+            3.1 create login.html in web app
+                action = "login"
+            3.2 web.xml 
+step -5 create LoginServlet
+        in java resource 
+        url-pettern - /login
+step -6 override methods
+    - init 
+        - opem connection   
+        - create dao insatance
+        - dopost 
+            - set content type  
+            - get writer
+                - call DAO's sign in method
+                - incase of invalid login   
+                    - retry link -> login.html
+                - incase of valid login 
+                    - send user details to client
+        - destroy
+            - clean up dao  
+            - close connection
+
+step -7 incase of valid login   
+            - redirect the  user to sutable next page
+                if admin -> admin dashboard
+                    - method of HttpServletResponse
+                      -public void sendRedirect(String location) throws IOException
+                if voter -> 
+                    if voted -> logout page
+                    if not voted-> candidate list
+
+-------------centrelized exception handling in servlets
+- how to tell WC that init method has faild ?
+    by throwing exception 
+    - cretae ServletException(String mess, Throwable rootCause)
+        throw new ServletExeption("err in init)
+
+-------------
+- server side state managaement
+    1. cookie based scenario
+        1.1 create a cookie(small data and server create the cookies)
+            API jakarta.servlte.http.Cookie(String nm,String value)
+            ex,
+                Cookie c1 = new Cookie("user_details",user.toString());
+        1.2 Servlet Add Cookies to response header and send to client
+            ex, 
+                public void addCookie(Cookie c1) // method of HttpServletResponse
+        1.3 client browser chechks the privecy settings
+            if Cookies disabled -> can't remember client
+            if  Cookies enabled -> browser check the cookie age
+                -1 default -> cookie is stored in browser cache.
+                > 0 -> save it on client's hard disk
+        1.4 when client send a request again  to same web application
+        client browser sends request + cookies(request header)
+
+        1.5 how to read the cookies data?
+            HttpServletRequest method,
+                Cookie[] getCookies();
+        remaining....
+
+-------------day -4 (19-05-2025)
+   
+        - Disadvantage of cookie based based session tracking
+            -
+            -
+            -
+            -
+    2. HttpSession API
+        - server side state managaement based on HttpSession interface.
+        - unique session id for each client but for all request one cookie
+        - session id stored on server side and send to client also
+
+    steps
+        1. get HttpSession from WC 
+            - method of HttpServletRequest
+                - public HttpSession getSession()
+        2. to store data in HttpSession -> store the data
+            - method of HttpSession
+                - public void setAttribute(String name, Object value)
+        3. To get data from HttpSession
+            - method of HttpSession
+                - public void getAttribute(String name)
+        4. to remove atribut from HttpSession
+            - method of  HttpSession
+                - public void removeAttribut(String attName)
+        5. To get all attribute name, bound to HttpSession
+            - method of HttpSession
+                - public Enumeration<String> get getAttributeName()
+        6. To get the session id 
+            - method of HttpSession
+                - public String getId()
+        7. To find out if it is new or existing session
+            - method of HttpSession
+                - public boolean isNew()
+        8. To discard HttpSession object
+            - method of HttpSession
+                - public void invalidate()
+        9. Default session timeout value for Tomcat is 30 mins
+            - how to chnage the session time out?
+                -public setMaxInactiveInterval(int second)
+                ex, hs.setMaxInactiveInterval(300);
+
+
+
+server pull 
+ - navigate the client to next page in the same request rather then in next new request.
+ - also known as the resource chaining or request dispatching technique.
+
+ dev step
+    1. Create Request Dispatcher object for wrapping the next page.
+        API of ServletRequest
+            jakarta.servlet.RequestDispatcher getRequestDispatcher(String path)
+    2. Forward scenario 
+        API of RequestDispatcher
+            public void forward(ServletRequest re, ServletResponse resp)
+
+- step for creating the web app partially database independent?
+	1. instead or hard coded values of the database_url, user_name and user_password in DBUtil class create the openConnection(String database_url, String user_name, String user_password)
+	2. call this method in root page (like login servlet) and pass the parameter in it.
+	3. for parameter  write paramterized constructor in LoginServlet.
+
+Day 5
+- forward and include (server poll)
+- web application event listener
+    steps
+
+
+ServletConfig(i)
+	GenericServlet(ic)
+
+Regarding SERVLET CONFIG	
+
+A servlet specific configuration object created by a servlet container to pass information to a servlet during initialization.
+
+1. Represents Servlet specific configuration.
+Defined in jakarta.servlet.ServletConfig -- interface.
+
+2. Who creates its(ServletConfig ka implementing class GenericServlet) instance  ?
+Web container(WC)
+3. When ?
+After WC creates servlet instance(via def constr, no paramterized constructor are called in servlet), ServletConfig instance is created & then it invokes init() method of the servlet.
+4. Usage
+To store servlet specific init parameters.
+(i.e the init-param is accessible to one servlet only or you can say that the init-param data is private for a particular servlet.)
+
+5. Where to add servlet specific init parameters?
+Can be added either in web.xml or @WebServlet annotation.
+
+XML Tags
+<servlet>
+    <servlet-name>init</servlet-name>
+    <servlet-class>ex.TestInitParam</servlet-class>
+    <init-param>
+      <param-name>name</param-name>
+      <param-value>value</param-value>
+    </init-param>
+</servlet>
+<servlet-mapping>
+<servlet-name>init</servlet-name>
+<url-pattern>/test_init</url-pattern>
+</servlet-mapping>
+
+OR 
+@WebServlet(value="/test", initParams={@WebInitParam(name="nm1",value="val1"),@WebInitParam(name="nm2",value="val2")})
+public class MyServlet extends HttpServlet {....}
+
+6. How to access servlet specific init params from a servlet ?
+	6.1 Override init() method
+	6.2 Get ServletConfig
+		Method of Servlet i/f 
+		public ServletConfig getServletConfig()
+	6.3 Get the init params from ServletConfig
+		Method of ServletConfig i/f
+		String getInitparameter(String paramName) : rets the param value.
+
+----------------------------------------------------
+development step for making web app partially database independent
+	1. use Jakarta.servlet.ServletConfig(i)
+	2. Add servlet specific init parameter in the web.xml
+		<init-param> 
+			<param-name>name</param-name>
+			<param-value>value</param-value>
+		</init-param>
+	3. when wc start th life cycle of the servlet
+		3.1 loads servlet class
+		3.2 creates the singleton instance of the servlet class using the default constructor.
+		3.3 create ServletConfig instance, and populate it with init-parm
+		3.4 invokes init() method.
+
+	4. get the init-parameter (with ServletConfig instance) with method getInitParamter("db_url") in init method of root page.
+
+	5. pass this all parameters in the openConnection() as centralized database connection like in openConnection create the singleton instance of the Connection and then use the life cycle method of the Connection.
+--------------------------------------------------------------------
+Regarding jakarta.servlet.ServletContext (i/f)
+
+1. Defined in  jakarta.servlet package.
+2. Who creates its instance  -- WC
+3. When -- @ Web application (=context) deployment time
+NOTE : The ServletContext object is contained within the ServletConfig object, which the WC provides the servlet when the servlet is initialized.
+
+4. How many instances ? --one per web application
+
+5. Usages
+5.1 Server side logging
+API public void log(String mesg)
+5.2 To create context(=application) scoped attributes
+API public void setAttribute(String nm,Object val)
+NOTE : Access them always in thread safe manner (using synchronized blocks)
+
+5.3 To access global(scope=entire web application) parameters
+How to add context scoped parameters ?
+
+In web.xml
+<context-param>
+  <param-name>name</param-name>
+      <param-value>value</param-value>
+</context-param>
+How to access these context params in a Servlet ?
+(can be accessed from init method onwards)
+
+1. Get ServletContext  
+API of GenericServlet
+ServletContext getServletContext() --method inherited from GenericServlet
+
+2. ServletContext API
+String getInitparameter(String paramName) : rets the param value.
+eg : ctx param name : user_name value : abc
+In the Servlet : getServletContext().getInitparameter("user_name") ---abc
+
+-------------------------------------------------------------------------
+- page navigation with server pool
+	- in client pool page navigation two(1st from client and 2nd temporary response from wc and based on that client again made the request to reach targeted page) separate request is send  to reach the targeted page but in server pool page navigation only one request is made to reach the client and last page will render the output only.
+
+Steps
+	1. Create Request Dispatcher object for wrapping the next page(resource --can be static or dynamic) 
+		API of ServletRequest
+		javax.servlet.RequestDispatcher getRequestDispatcher(String path/targeting page)
+		RequestDispatcher rd = getRequestDispatcher("admission_result");
+	2.Forward scenario
+		API of RequestDispatcher
+		public void forward(ServletRequest rq,ServletResponse rs)
+		rd.forward(ServletRequest rq,ServletResponse rs);
+
+		This method allows one servlet to do initial processing of a request and another resource to generate the response. (i.e division of responsibility)
+
+		Uncommitted content in the response buffer is automatically cleared before the forward. 
+
+		If the response already has been committed(pw flushed or closed) , this method throws an IllegalStateException.
+
+		Limitation --only last page in the chain can generate dynamic response.
+
+	3. Include scenario
+		API of RequestDispatcher
+		public void include(ServletRequest rq,ServletResponse rs)
+
+		Includes the content of a resource @run time (servlet, JSP page, HTML file) in the response. --  server-side includes. 
+
+		Limitation -- The included servlet/JSP cannot change the response status code or set headers; any attempt to make a change is ignored. 
+
+
+	
+        
+-----------------------------------------------------------------------------------------
+Day -7 (22-05-2025)
+MVC dev step:
+1. create new dyn web project
+2. create or copy (DBUtil, dao(UserDao and CrudDao) and pojo)
+    - optional
+        - copy mysql 9.3 container jar and paste in tomcat lib folder(remove Earlier and add new one)
+3. creating front controller Servlet
+    - routing ( centralized navigation between the controllers)
+    - request handaling
+    - diployment (either @WebServlet or xml tag)
+        - value (url pattern ) : gloable intercept pattern => /
+        - lazy or eger based on the  that LoadOnStartup
+    - override
+        - init  
+            - openConnection(DB specific or partial independent)
+                - context parameter
+        - doGet
+            - routing logic
+                - path -/admin -> show all list of user wihtout the admin
+                    - add a method(private may be) -> list users functionality 
+        - destroy
+            - cleanUp dao and close connection
+4. view layer
+    - render the response with JSP(till now we put it(.jsp) under the public webApp)
+    now it will be private(startdard practice- do not give the direct access to view layer)
+    it should be render via front controller -> so under WEB_INF -> views -> view1.jsp
