@@ -1,0 +1,90 @@
+- what is front controller? ==> day 7 lab
+    - it is entry point for any client and front controller redirect the client according to the client request to desired page.
+    - inshort front controller providing the routing.
+    - also known as centeralized disptcher | entry point
+    - it is Servlet.
+    - front controller first check the type of the request and 
+    depneding upon the  nature of the request Frontcontroller forward
+    the client to another Servlet(also known as the Controller).
+
+        Frontcontroller ->Servlet
+                ||
+          controller ->Servlet
+                ||
+        Business logic layer(service layer ->javabean) //optional
+                ||
+            DAO layer [Interface(like UserDao) and Implimenting class(like UserDaoImpl)]
+        (JDBC/Hibernate)
+                ||
+               POJO
+                ||
+               RDBMS
+    Now
+        at the end depending on response 
+        Frontcontroller redriect forward(so one request only) to 
+         JSP based view layer
+         - and only jsp file render the output
+         - in JSP WC call the _jspservice method
+            agian control come back to frontcontroller 
+
+                ||
+            frontcontroller
+        sent the output to client
+
+development steps:
+
+1. create new dynamic web project 
+2. create the DBUtils;
+3. create UserDao
+    - delcared the method ex, public User signIn(String email, String pwd);
+4. create the Implimentation calss of UserDao-> UserDaoImpl.java 
+    - impliment the USerDao methods 
+        - ex, 
+        // 1. declared Connection feild and PreparedStatement
+        // default constructor
+            2. getConnection
+            3. SQl query
+            4. connection.preppareStatement(sql);
+        
+        // method defined
+        public User signIn(String email, String pwd){
+           5.1 set in parameter
+                pst1.setString(1, email);
+		        pst1.setString(2, pwd);
+           5.2 execute the query 
+                try (ResultSet rst = pst1.executeQuery()) {
+                    /*
+                    * id | first_name | last_name | email | password | dob | status | role
+                    */
+                    if (rst.next()) {  // if for single result and while for multiple result
+                        // success
+                        return new User(rst.getInt(1), rst.getString(2), rst.getString(3), rst.getString(4), rst.getString(5),
+                                rst.getDate(6), rst.getBoolean(7), rst.getString(8));
+                    }
+			        return null;
+
+		        }  
+        }
+
+5.Create the front controller Servlet
+    - routing (centeralized navigation)
+    - request handling
+    - webserver annotation -> @WebServlet
+        - value (url patterns) -> gloable interceptor pattern-  /
+        - loadOnStartUp ->eager 
+    - init method
+        - openConnection -> DB independent partially ->conetxt params
+        - create dao instance
+    - doGet
+        - routing logic
+        - path -> / : List of all users (without admin)
+        - write private method list users functionality
+    - destroy
+        - close connection
+        - clean dao
+6 view layer
+    -jsp 
+        -> till now it is public (under the Webbapp folder)
+        -> but now we put it in WEB_INF to make it private as it is not recommanded to
+            to direct access to view layer it should be render  through the front controller
+        -> keep all jsp user WEB_INF -> WEB_INFviews/view1
