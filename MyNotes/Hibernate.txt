@@ -1,0 +1,801 @@
+- what is hibernate?
+    - complete solution to manage automactic persistence(means saving the data) in DB
+    - it is nothing but ORM(object relational mapping) tool
+    - hibernate is example of the abstract(internaly used jDBC)
+    - open source freamwork (gavin king).
+    - middle layer between the web application and database.
+    - hibernate not direcalty communicate to DB but internally used the JDBC.
+    - spring boot freamwork has the default persist provider as Hibernate
+    
+- why Hibernate?
+    - open source
+    - supports cache for faster performance
+        - In Hibernate, cache means:
+        Remembering data so we don’t ask the database again and again (which is slow).
+        - L1 cache 
+            - It is automatically enabled
+            - It is like your short-term memory
+            - It works inside one Hibernate session
+        Without Cache:
+            - First time → Hibernate asks the database.
+            - Second time → Even if it’s the same data, Hibernate again asks the database.
+                🔴 Slower, more database load.
+
+        With L1 Cache (default):
+            - First time → Hibernate asks the database.
+            - Second time (in same session) → Hibernate uses session memory.
+                🟢 Faster
+
+        With L2 Cache:
+            - First time → Hibernate asks the database and saves the data in L2 cache.
+            - Second time (in different session) → Hibernate uses shared memory (L2 cache).
+                🟢 Super fast, no DB hit
+                
+                    When is L2 cache cleared?	                Explanation
+                    Hibernate shutdown	                App is closed or SessionFactory is closed
+                    Entity is updated or deleted	    Hibernate syncs cache with DB changes
+                    Cache expiry time is reached	    Based on time set in config (e.g., 5 min)
+                    You manually clear it	            Using evict methods
+
+    - auto table creation
+    - simplifies join queries
+    - supports 100 % DB independence.
+    - Hibernate will translate DB independent queries(HQL/ JPQL) to DB specific SQl
+    - not required to write pst/st/cst and query and db connection -> all this is done by the Hibernate.
+    - Hibernate create internal connection pool (collection of DB connection at hibernate freamwork booting time)
+    - Hibernate translate checked SQL exception into unchecked exception
+    - Hibernate supports method chaining.
+what is JPA(java persistence API)?
+    - JPA is specification and hibernate is implimentation
+    - other implimentation aprat from hibernate is  iBalts, EcliseLink etc.
+    -
+- maven
+    - what is maven?
+        - it is popular automation and depenedancies managaement  tool used mainly for java project
+    - pom.xml contain all depenedancy (just like package.json)  
+
+- hibernate Architecture(imp components)
+    1. session (interface)  and impl classes -> hibernate core jar
+        - session per clinet request
+        - represent the main interface for performing the CRUD operation
+            - CRUD(save,get,laod,createQuery,update,delete...etc)
+                ex, session.get , session.laod
+
+        - session is thin wrapper around pooled out db connection
+            - pooled out the DB connection from DBCPool
+            - level 1 cache
+
+    2. session factory(interface) 
+        - represent the DBC pool
+        - provider of hibernate session
+        - session factory object onces (singleton) per DB per entire web app.
+        - session factory is immutable(to chnage it shutdown factory and again start).
+        - it is heavy weight(time consuming)
+        - we create this at application start up time
+        - level 2 cache explicitly 
+    
+    3. org.hibernate.cfg.Configuration class
+        - it is represent hibernate config 
+        - it is provider of  SessionFactory
+
+
+- CRUD operation in hibernate
+
+
+- new project
+    maven project
+        simple project -> next
+            groupId
+            artifactId
+            packaging - jar
+            description - Standalone Basic Hibernate project
+
+            finish
+        pom.xml 
+            <build> 
+                <plugins>
+                    <plugin>
+                      maven compiler plugin
+                    </plugin>
+                </plugins>
+                <depenedancies>
+                    <depenedancy>
+                                core
+                    </depenedancy>
+                </depenedancies>
+
+                <depenedancies>
+                    <depenedancy>
+                                SQl
+                    </depenedancy>
+                </depenedancies>
+            </build
+
+==========================================================
+- Devlopment steps in hibernate application
+    1. create the maven project to download hibernate depenedancies(throgh pox.xml and maven website) -> maven depenedancy download
+    2. configure(add) hibernate.cfg.xml under src/main/resource
+        - add DB config -> 
+        - DBCP
+        ex,
+        <hibernate-configuration>
+            <session-factory>
+                <property name="hibernate.connection.autocommit">false</property>
+                <property name="hibernate.connection.driver_class">com.mysql.cj.jdbc.Driver</property>
+                <property name="hibernate.connection.password">root</property>
+                <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/adv_java?createDatabaseIfNotExist=true&amp;useSSL=false&amp;allowPublicKeyRetrieval=true</property>
+                <property name="hibernate.connection.username">root</property>
+                <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
+                <property name="hibernate.current_session_context_class">thread</property>
+                <property name="hibernate.connection.pool_size">10</property>  // max size of Db connection in pool
+                <property name="hibernate.show_sql">true</property>		
+                <property name="hibernate.hbm2ddl.auto">update</property>				
+            </session-factory>
+        </hibernate-configuration>
+
+        ===========
+        imp hibernate property
+            - hbm2ddl.auto -> update
+                - hbm2ddl(hibernate mapping for DDL command)
+                 - if table for POJO existing then hibernate continue with that and if 
+                    there is no table for any pojo it will create the automaticly   table
+                        ex, pojo1.java
+                            hibernate create automatically for this pojo1 class
+        =================================
+    3.  create HibernateUtils class 
+        - to create the singleton, impputable SessionFactory
+        - write static initialzation block (core java : static{}).
+
+
+        src/main/java   
+            com.cdac.utils 
+                class HibernateUtils
+
+
+                    import org.hibernate.*;
+                    public class HibernateUtils{
+                        private static SessionFactory factory;
+
+                        static{
+                            System.out.println("in static init block);
+
+                            // 1. create Configuration class instance using default constructor
+                                	Configuration cfg = new Configuration();
+                            // 2. public Configuration configure() therows HIbernateException
+                                    it return loaded configuration from hibernate.cfg.xml
+                                    cfg.configure();
+
+                            // 3. build SessionFactory
+                                public SessionFactory buildSessionFactory()
+
+                                factory = new Configuration().configure().buildSessionFactory()
+                        }
+
+                        public static SessionFactory getFactory(){
+                            return factory;
+                        }
+                    }
+
+
+
+        src/main/java 
+            com.cdac.Tester
+                import static com.cdac.utils.HibernateUtils.getFactory;
+                class TestHibernate{
+                        psvm(){
+                            try(SessionFactory sf = getFactory()){
+                                System.out.println(" hibernate up n runnig);
+                            }catch(Exception e){
+                                e.printStackTract();
+                            }
+                        }
+                }
+    4. layers (from bottom)
+        4.1 Create Hibernate manage POJO
+            - RDBMS object represent  by POJO class (Hibernate manage POJO/Entity)
+            - lifecycle manage by Hibernate
+            - can use annotations or XML tags
+            - mention Mandatory annotations (like for servlets we used)
+                - jakarta.persistence -> package
+                1) @Entity - class level
+                2) Id - for primary key => where? -> feild level or getter level
+                    this will add PK constraint
+            - optionl annotations as well 
+
+            src/main/java
+                com.cdac.entity 
+
+                    // import annotations
+                    import jakarta.persistence.*;
+                    @Entity  // class level annotations(m)
+                    @Table(name = "new_users") -> to specify the table name
+
+                    public class User {
+                        // recomandation - use ref type for easier null checking for hibernate
+                        @Id(m)                                                // feild level annotations
+                        @ Generatedvalue(stretegy = GenerationType.IDENTITY)  // for auto generation ids increment constraint
+                        @Column(name = "user_id")  -> 
+                        private Integer userId;
+
+                        @Column(length = 30 , name - "first_name");
+                        private String firstName;
+
+                        @Column(length = 30 , name - "last_name");
+                        private String lastName;
+
+                        @Column(length = 30 , unique = true)
+                        private String email;
+
+                        @Column(length = 20 , nullable = false) // not null
+                        private String password;
+
+                        @Transient // skip from persistence no column generation
+                        private String confirmPassword;
+
+                        private LocalDate dob;
+
+                        @Enumerated(EnumType.STRING) -> varchar
+                        @Column(length = 30, name="user_role")
+                        private UserRole userRole;
+
+                        @Lob // column type
+                        private byte[] image;
+
+                        public User(){
+                            //Mandatory
+                        }
+
+                        // parametrized constructor
+                        public USer(String firstName,String lastName){
+                            // baki hai
+                        }
+
+                        //to string method
+                        public String toString(){
+                            // baki hai
+                        }
+                    }
+
+                    // 4.2 enum
+                    public enum UserRole{
+                        CUSTOMER,MANAGER,
+                    }
+
+    5. Add < mapping> entry in config file  -> one per entity ( one per POJO class)
+         <hibernate-configuration>
+            <session-factory>
+                <property name="hibernate.connection.autocommit">false</property>
+                <property name="hibernate.connection.driver_class">com.mysql.cj.jdbc.Driver</property>
+                <property name="hibernate.connection.password">root</property>
+                <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/adv_java?createDatabaseIfNotExist=true&amp;useSSL=false&amp;allowPublicKeyRetrieval=true</property>
+                <property name="hibernate.connection.username">root</property>
+                <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
+                <property name="hibernate.current_session_context_class">thread</property>
+                <property name="hibernate.connection.pool_size">10</property>  // max size of Db connection in pool
+                <property name="hibernate.show_sql">true</property>		
+                <property name="hibernate.hbm2ddl.auto">update</property>
+
+                // add mapping entry
+                <mapping class = "com.cdac.entities.User" />				
+            </session-factory>
+        </hibernate-configuration>
+
+ 
+        when project run hibernate create the user table in DB but constraint and all changeed like datatype
+        so use optional annotations.
+
+    6.create Hibernate based DAO layer(get SessionFactory from session)
+        6.1 DAO(interface)
+            - method signUp()
+        6.2 DAO implimentation class
+
+        src/main/java
+            com.cdac.dao 
+                // interface
+                public interface UserDao{
+                    // add method to signup new user
+                    String signUp(User user); // no throws as check exc -> unchecked
+                }
+
+                // implimentation class
+                import org.hibernate.*;
+                public UserDaoImpl{
+
+                    public String SignUp(User user){
+                        String msg = "usersign up";
+                        // 1. get Hibernate Session from SessionFactory
+                        /*
+                            from - API of org.hibernate.SessionFactory
+                            method - public Session getCurrentSession() throws HibernateException
+                            Hibernate SessionFactory checks if there is already existing session or not
+                                no session -> create the Session obj and return it
+                                if yes - > return existing session object to caller
+                        */
+                        Session session  = getFactory.getCurrentSession();
+                        Session session2  = getFactory.getCurrentSession();
+                        System.out.println(session==session2); // true
+
+                        // 2. begin transaction
+                        /*
+                            public Transction begintransaction() throws HibernateException
+                        */
+                        Transction tx = session.begintransaction();
+                        System.out.println(session.isOpen()+""+session.isConnected());
+
+                        try{
+                            //success
+                            /*
+                            Session API public void persist(Object trasientObj)// deprecate->save() method
+                            */
+                            session.persist(user)
+                            tx.commit();
+                            /*
+                                => internally what happend when the commit is executed.
+                                * 1. session.flush();
+                                * 		- it triggers auto dirty checking	
+                                * 		- hibernate cheks the state of L1 cahce with DB	
+                                * 		- 1. new entity in L1 cache  -> insert
+                                * 		- 2. existing entity but with updated state - update
+                                * 		- 3. entity marked for removal		-> delete
+                                * 		- 4. no chnage -> no DML query	
+                                * 2. session.close()
+                                * 		- L1 cache is destroyed from heap 
+                                * 		- pooled out DB connection return to DBCP (for re  usablity)																																																																																																																																																																																																																																																																																																																																																																																																																																																																																														
+                                read automatic dirty check 
+                            */
+                            msg = "User signed Up !"+user.getUserId();
+
+                        }catch(RuntimeException e){
+                            if(tx != null){
+                                tx.rollback();
+                                    /*
+                                        * internal for rollback
+                                        * 		1. session.close()
+                                        * 			- pooled out DB Connection return to DBCP
+                                    */
+                            }
+                            //rethrow the exception  so that caller knows about it
+                            throw e;
+                        }
+                        return msg;
+                    }
+                }
+
+===================================================
+day 9 (2) 24/05/2025
+
+
+SessionFactory API 
+    openSession vs getCurrentSession
+
+    1. getCurrentSession
+        - if session obj exits then existing object is return otherwise create the new session and return new object
+        - auto close upon tx boundary(commit or rollback)
+    2. openSession
+        - irrespetive of session exist or not return the new session object
+        - explicit close required so try- catch - finally
+
+- Entity State Transction(entity life cycle manage by Hibernate)
+    - entity doenst exist in Heap 
+            |
+            new
+            | 
+            Transient
+
+- hibernate  POJO state
+
+State                   Does it exist in L1 cache?              Does it exist in DB
+
+Transient                   No                                      No 
+persistent(@ session.persist()) Yes                                     No(Yes after commit)-> trasient to persistent
+Detched                     No                                      Yes
+
+
+for  Detched (3 trigger) -> persistent to Detched
+    - session.close()
+         - but for close() L1 clear and DB connection return to DBCP.
+    - public void evict(Object persistentPojoRef) throws HibernateException
+    - public void clear() throwa HibernateException
+        - remove all the persistent entity from L1 cache
+        - database connection not retrun to DBCP only L1 clear
+        
+
+- to retrive the data from DB(does't not exist in heap to persistent satate(l1 cache))
+        - get
+            - by Id
+                public <T> T  get( Class<T> class, Object id) throws HibernateException
+                    T -> type of POJO 
+                    1st -> POJO(entity) class
+                    2nd  -> entity Id
+                    return type -> return null for Id not found but if found return POJO reference
+        - load(d)
+        - JPQL
+
+
+=================================yesteray continue continue
+UserDao - getUserDetails
+    public User getUserDetailsById(Interger userId)
+
+UserDaoImpl
+    public User getUserDetailsById(Interger userId){
+        // 1. get session from SF
+        Session session = getFactory().getCurrentSession(); 
+
+        // 2. begin transationq
+        Transction tx = session.beginTransaction();
+
+        //3. user 
+        User user = null;
+
+        try{
+            user = session.get(User.class,userId); // line -1 get() method
+            /*
+                - hibernate checked if entity exist in L1 cache with given id?
+                    if not exist ->  select Query fired  when line 1 execute
+                    if exist in L1 -> read from the cache
+
+                    if valid user -> persistent 
+            */
+            tx.commit();
+        }catch(RuntimeException e){
+            if(tx != null){
+                tx.rollback();
+                throw e;
+            }
+        }
+        return user;
+    }
+
+tester calss baki
+for insert save()
+------------------------steps -------------------------
+- display all user details
+    - can we solve it using the get() ? not 
+        SQL - select * from new_users;
+        hql - from User (casesentive entity) 
+        JPQL - select u from User u
+                - u-> POJO alias
+                - lifts all the feilds(columns) from the DB
+    0. create storing container for all user (like list)
+    1. replace databases specific query to JPQL/HQL 
+
+    2. Create Query object from session interface
+        public <T> org.hibernate.query.Query<T> createQuery(String JPQL/HQL, Class<T> resultType)
+
+        ex, --> session.createQuery(String, Class)
+    
+    3.To execute query
+        Query interface method
+            public List<T> getResultList() throws HibernateException
+                - return the list of persistent entities
+            getSingleResult() – for exactly one result
+----------------step implimentation------------
+    UserDao -> List<User> getAllUsers();
+    UserDaoImpl -> implimentation
+
+        public List<User> getAllUsers(){
+                List<User> users = null;
+                //1.
+                String jpql = "select u from u"
+                2.
+                Session session = getFactory().getCurrentSession();
+                //3.
+                Transction tx = session.beginTransaction();
+
+                try{
+                    User = session.createQuery(jpql,User.class).getResultList();
+                    tx.commit();
+                }catch(RuntimeException e){
+                    if (tx != null){
+                        tx.rollback();
+                        throw e;
+                    }
+                }
+        }
+    DisplayAllUsers(tester)
+        psvm(){
+            //baki
+        }  
+
+------------------------------------------------
+- display all user born between start date and end date & under a specific role 
+ jdbc - pst -> set in para -> exuture query -> result set print with while
+
+ - Hibernate 
+    - jpql = select u from User u where u.dob between :start and :end and u.serRole = :role 
+    - how to named IN paramter to query
+        - there is Query API
+            public Query<T> setParamter(String paramName, Object value) throws HIbernateException
+
+
+
+  
+----------------------
+           DisplayUserByDobAndRole(tester)
+
+           psvm(){
+            try(SessionFactory sf = getFactory()){
+                Scanner sc  = new Scanner(System.in);
+                UserDao dao = new UserDaoImpl();
+
+                System.out.println("enter bigin date and end date");
+                System.out.println("select User")
+                dao.getSelectedUser(LocalDate.parse(sc.next()), LocalDate.parse(sc.next()),UserRole.valueOf(sc.next().toUpperCase()));
+                .forrEach()   ---> baki
+            }
+           } 
+            --- dao and daoimplimetaton
+           UserDao -> List<user> getSelectedUser(LocalDate start,LocalDate end1,UserRole role);
+
+           UserDaoImpl -> List<User> getSelectedUser(LocalDate start,LocalDate end1,UserRole role){
+                List<user> users = null; // result list
+                jpql = select u from User u where u.dob between :bigin and :end and u.userRole = :role 
+                Session session  = getFactory().getCurrentSession();
+
+                Transction tx = session>beginTransaction();
+
+                try{
+                    users = session.createQuery(jpql,User.class)
+                    .setParamter("bigin",start) // set inparamter with method chaining
+                    .sepParameter("end",end1) ->(queryname , parameter name)
+                    .setParamter("rl",role)
+                    .getResultList();  // get result
+
+                    tx.commit()
+                }catch(RuntimeException e){
+                    if(tx != null){
+                        tx.rollback();
+                    }
+                    throw e;
+                }
+           }
+--------------------------------task
+User log in 
+    i/p email and password
+    o/p User details with success mesg or invalid login code
+
+    Query API
+        - getSingleResult() method
+        if no matching  user -> NoResultException
+        if more then one result - -> NonUniqueResultException
+        if called for Jpdl Update or delete statement -> IllegalStateException
+
+         Why does JPQL throw IllegalStateException for UPDATE or DELETE?
+            Because JPQL UPDATE and DELETE queries require a transaction,
+            and if you execute them without an active transaction, Hibernate/JPA throws:
+
+
+
+------------------------------------------------------
+Detached vs persistent
+---------------------------------------------------
+display all user names(firstname under a specific role)
+- UserDao - method List<String> getSelectedUsersFirstNames(UserRole role1);
+- UserDaoImpl -
+    1- jpql
+    2. set role para
+    3. createQuery (jpql,String.class)
+        .setParamter("role",role1)
+        .getResultList();
+- tester class  
+        call dao method -> forEach() => for printing
+----------------------------------
+- display all user first name , lastName , dob, under a specific role
+decise input  ->UserRole
+UserDao(i) -> 
+UserDaoImpl(ic) ->
+    // complex
+    - jpql select u.firstName, u.lastName,u.dob from User  u where u.userRole=:rl;
+    - set role para 
+    - createQuery()
+    - getResultSet() -> complex
+
+    - in case of projection(multiple column)- insatde of using Object[].class use this,
+        - constructor expression
+        ex, 
+            jpql = "select new com.cdac.entities.User(u.firstname,u.lastName,u.dob)
+            from User u where u.userRole =:role"
+        - createQuery(jpql,User.class);
+
+        - pre requesuit for matching constructor
+            in User class{
+
+                //adding overload para constructor
+                public User(String firstName, String lastName,LocalDate dob){
+                    this.
+                    this.
+                    this.
+                }
+            }
+
+        tester class
+
+
+        ----------------------------------------------
+        apply discont to subscriptionAmmount  ammount(not preent in the table) for all the user born before specific date
+
+            1.add new instance in pojo 
+            @Column(name ="subscription_amount")
+                private double subscriptionAmmount; 
+            2. getter and setter for this property
+
+===================================================================
+day 3 -> 10
+- Detached to persist 
+    - saveOrUpdate(d)
+    - merge
+    - update
+- persistent to removed
+    - delete(ref)
+    - after commit -> removed from L1 and DB -> Transient state
+---------------------------
+
+- intergration of web app with hibernate template
+    objetive 1- perticular user delete  -> 4th state of hibernate object 
+        sessoin API
+            public void remove(Object persistenEntityReference)
+            but upon commit -> DML delete query fired 
+        tester class
+        UserDao ->deleteUserDetails(Integer userId)
+    objective 2 - delete all user with perticular role
+
+    steps- baki hai
+
+------------------------------------
+- image handling
+    - save user image in DB
+        - i/p userId, image file(path)
+        - o/p messag
+    - restore user image from DB
+        - i/p user email. new image file name(path) - where the image frpm DB will be stored
+        - o/p -> success mess anything
+
+    - add dependancy of commons.io in pom.xml
+    - Use FileUtils.....
+    - methods
+        - public static byte[] readFileToByteArray(File file) throws IOException
+            - read the content of th file info in to a byte array -> the file is close afterward
+        - public static void  writeByteArrayToFile(File file, byte[] data) throws IOException
+            - writes a byte aray to file creatong the file if it does not exits 
+
+    tester class  
+        SaveUserImage{
+            psvm(){
+                try(SessionFactory sf = new getFactory()){
+                    Scanner sc = new Scanner(System.in);
+
+                    userDao dao = new UserDaoImpl();
+                    INterger userId = sc.nextInteger();
+                    String path = sc.next();
+
+
+                }
+            }
+        }
+    - UserDao -> String saveImage(Interger suerID, string path) throws IOException
+    - USerDaoImpl -> 
+        {
+            String msg = "save image faild";
+            // 1.
+            Session session = getFactory().beginTransaction();
+            // 2.
+            Transction tx = session.beginTransaction();
+
+            try{
+                //3. get user from it id
+                User user = session.get(User.class, userId);// select query fired
+                // user validataion
+                if(user != null){
+                    //user- persistent
+
+                    //4. create java.io.File class instance wrapping path
+                    File file = new File(path);
+
+                    //5. validate if the file exist and its readable
+                    if(file.isFile() && file.canRead()){
+                        // file existing  and readable
+                       byte[] imageData = FileUtils.radFileToByteArray(file);
+                       //6. setter call
+                        user.setImage(imgData);// modify the state of the persistent entity
+
+                    }
+                }
+                tx.command(); // session fluah()-> dirty check -> DML update -> session close
+            }catch(RuntimeException e){
+                if(tx != null){
+                    tx.rollback();
+                }
+                throw e;
+            }
+        }
+
+-------------------------------------
+- restore the user image from DB   
+    I/P -> user email , new image filename(path - where to store)
+    O/P - message   
+
+        1.tester class -> RestoreUserImageFromDB
+        2. UserDao -> public String restoreImage(String email, String path);
+        3. UserDaoImpl ->
+        {
+                String msg = "restro image faild";u.email=: em";
+                String jpql = "select u from User u where 
+                // 1.
+                Session session = getFactory().beginTransaction();
+                // 2.
+                Transction tx = session.beginTransaction();
+
+                try{
+                    //3. get user from it email
+                    User user =session.createQuery(jpql, User.class)
+                            .setParamter("em", email)
+                            .getSingleResult();
+
+                    // 4 get image 
+                    byte[] imgeData = user.getIimage();
+                    if(imageData != null){
+                        // write byte[]
+                        FileUtils.writeByteArrayToFile(new File(path), imageData)  ;
+                        msg = "image restroed from DB to file(targete)
+                    }
+                    
+                    tx.command(); // session fluah()-> dirty check -> DML update -> session close
+                }catch(RuntimeException e){
+                    if(tx != null){
+                        tx.rollback();
+                    }
+                    throw e;
+                }
+        }
+-----------------------------------------------------------
+- lombok library
+    - 3rd party library 
+    - class level annotation
+        @NoArgsConstructor, @AllArgsConstructor, @RequiredArgsConstructor
+        @Getter
+        @Setter
+        @ToString(exclude = {...}, callSuper = true)
+        @Data
+        @EqualsAndHashCode
+        @Slf4j - simple logging facade for Java (logging frmwork)
+
+cloon food delivery
+- restaurants
+- menu (food item)
+- customer |admin - user
+- order
+    - orderline
+- delivery address
+-tag 
+
+----------------------------------
+Day-12(27-05-2025)
+
+uni direcational 
+    - one to one not sure 
+    - many to many not sure 
+
+    - User 1------> 1 address(12.1 project)
+        User entity
+            //provide Address instance in User class(HAS- A)
+            @OneToOne(cascade=ALL) 
+            @joinColumn(name="add_id")
+            private Address myAddress;
+    code
+
+    @entity
+    @NoArgsConstructor
+    @Getter
+    @Setter
+
+    public class Address extends BaseEntity
+        -> provide mappy for this class in config file
+    public class User extends BaseEntity
+        @OneToOne
+        @JoinColumn(name ="address_id")
+        private Address myAddress;
+Uni direcational
+    - many to many
+    -Tag*------------>*Restaurant
+    - Tag extends BaseEntity
+        private Set<Restaurant> restaurant = new HashSet<>();
